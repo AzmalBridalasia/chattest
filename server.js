@@ -30,9 +30,11 @@ io.on("connection", (socket) => {
     // ===========================
     socket.on("login", (user_id) => {
 
+        socket.user_id = user_id;
+
         socket.join("user_" + user_id);
 
-        console.log(`User ${user_id} joined personal room user_${user_id}`);
+        console.log(`User ${user_id} joined personal room`);
 
     });
 
@@ -56,11 +58,35 @@ io.on("connection", (socket) => {
 
         console.log("Message :", data);
 
-        // Chat screen open users
-        io.to(String(data.room)).emit("receive_message", data);
+        // Room me sender ko chhodkar sabko bhejo
+        socket.to(String(data.room)).emit("receive_message", data);
 
-        // Receiver notification (even if room not open)
-        io.to("user_" + data.receiver_id).emit("receive_message", data);
+        // Agar receiver ne room join nahi kiya hai,
+        // tab personal room par notification bhejo.
+
+        const receiverRoom = io.sockets.adapter.rooms.get(String(data.room));
+
+        let receiverInsideRoom = false;
+
+        if (receiverRoom) {
+
+            for (const socketId of receiverRoom) {
+
+                const s = io.sockets.sockets.get(socketId);
+
+                if (s && String(s.user_id) === String(data.receiver_id)) {
+
+                    receiverInsideRoom = true;
+                    break;
+                }
+            }
+        }
+
+        if (!receiverInsideRoom) {
+
+            io.to("user_" + data.receiver_id).emit("receive_message", data);
+
+        }
 
     });
 
