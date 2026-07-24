@@ -23,7 +23,16 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
 
-    console.log("✅ Connected :", socket.id);
+console.log("✅ Connected :", socket.id);
+
+// User Login
+socket.on("login", (userId) => {
+
+    socket.join("user_" + userId);
+
+    console.log("User " + userId + " joined personal room");
+
+});
 
     // Join Room
     socket.on("join_room", (room_id) => {
@@ -37,11 +46,15 @@ io.on("connection", (socket) => {
     // Send Message
     socket.on("send_message", (data) => {
 
-        console.log("Message :", data);
+    console.log("Message :", data);
 
-        io.to(String(data.room)).emit("receive_message", data);
+    // Chat open users (room members)
+    io.to(String(data.room)).emit("receive_message", data);
 
-    });
+    // Receiver ko realtime notification, chahe room join na kiya ho
+    io.to("user_" + data.receiver_id).emit("receive_message", data);
+
+});
 
     // Typing
     socket.on("typing", (data) => {
