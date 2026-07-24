@@ -23,52 +23,64 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
 
-console.log("✅ Connected :", socket.id);
+    console.log("✅ Connected :", socket.id);
 
-// User Login
-socket.on("login", (userId) => {
+    // ===========================
+    // LOGIN
+    // ===========================
+    socket.on("login", (user_id) => {
 
-    socket.join("user_" + userId);
+        socket.join("user_" + user_id);
 
-    console.log("User " + userId + " joined personal room");
+        console.log(`User ${user_id} joined personal room user_${user_id}`);
 
-});
+    });
 
-    // Join Room
+
+    // ===========================
+    // JOIN CHAT ROOM
+    // ===========================
     socket.on("join_room", (room_id) => {
 
         socket.join(String(room_id));
 
-        console.log(`User ${socket.id} joined Room ${room_id}`);
+        console.log(`Socket ${socket.id} joined Room ${room_id}`);
 
     });
 
-    // Send Message
+
+    // ===========================
+    // SEND MESSAGE
+    // ===========================
     socket.on("send_message", (data) => {
 
-    console.log("Message :", data);
+        console.log("Message :", data);
 
-    // Chat open users (room members)
-    io.to(String(data.room)).emit("receive_message", data);
+        // Chat screen open users
+        io.to(String(data.room)).emit("receive_message", data);
 
-    // Receiver ko realtime notification, chahe room join na kiya ho
-    io.to("user_" + data.receiver_id).emit("receive_message", data);
+        // Receiver notification (even if room not open)
+        io.to("user_" + data.receiver_id).emit("receive_message", data);
 
-});
+    });
 
-    // Typing
+
+    // ===========================
+    // TYPING
+    // ===========================
     socket.on("typing", (data) => {
 
         socket.to(String(data.room)).emit("typing", data);
 
     });
 
-    // Stop Typing
+
     socket.on("stop_typing", (data) => {
 
         socket.to(String(data.room)).emit("stop_typing", data);
 
     });
+
 
     socket.on("disconnect", () => {
 
